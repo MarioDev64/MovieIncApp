@@ -9,7 +9,7 @@ export const getPlayingNowMovies = async () => {
 };
   
 export const getMovieDetails = async (movieId: number) => {
-    const response = await axiosInstance.get(`/movie/${movieId}`);
+    const response = await axiosInstance.get(`/movie/${movieId}?append_to_response=credits`);
     return response.data;
 };
   

@@ -4,9 +4,20 @@ import { getRatedMovies } from '../services/Account';
 import { useAuth } from '../context/AuthContext';
 import { Movie } from '../@types';
 
+interface MovieWithCredits extends Movie {
+  credits?: {
+    cast: Array<{
+      id: number;
+      name: string;
+      character: string;
+      profile_path: string | null;
+    }>;
+  };
+}
+
 const useMovieDetail = (movieId: number) => {
   const { accountId, sessionId } = useAuth();
-  const [movieDetail, setMovieDetail] = useState<Movie | null>(null);
+  const [movieDetail, setMovieDetail] = useState<MovieWithCredits | null>(null);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

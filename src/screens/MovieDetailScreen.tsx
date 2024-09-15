@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Image, ScrollView } from 'react-native';
-import { Text, ActivityIndicator, Chip, ToggleButton } from 'react-native-paper';
+import { Text, ActivityIndicator, Chip, ToggleButton, Card, Avatar } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Rating } from '@kolking/react-native-rating';
 import useMovieDetail from '../hooks/useMovieDetail';
@@ -86,6 +86,23 @@ const MovieDetailScreen: React.FC = () => {
         {ratingLoading && <ActivityIndicator size="small" style={styles.ratingIndicator} />}
         {ratingError && <Text style={styles.errorText}>{ratingError}</Text>}
       </View>
+      
+      <Text style={styles.sectionTitle}>Cast</Text>
+      <ScrollView horizontal style={styles.castContainer}>
+        {movieDetail?.credits?.cast.slice(0, 10).map((actor) => (
+          <Card key={actor.id} style={styles.castCard}>
+            <Card.Content>
+              <Avatar.Image 
+                size={80} 
+                source={{ uri: actor.profile_path ? getImageUrl(actor.profile_path, "200") : 'https://via.placeholder.com/200' }} 
+              />
+              <Text style={styles.actorName}>{actor.name}</Text>
+              <Text style={styles.characterName}>{actor.character}</Text>
+            </Card.Content>
+          </Card>
+        ))}
+      </ScrollView>
+
       <Recommendations
         recommendations={recommendations}
         onMoviePress={handleMoviePress}
@@ -171,6 +188,32 @@ const styles = StyleSheet.create({
   errorText: {
     color: 'red',
     marginLeft: 8,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginHorizontal: 16,
+  },
+  castContainer: {
+    marginTop: 8,
+    marginHorizontal: 16,
+  },
+  castCard: {
+    width: 120,
+    marginRight: 8,
+  },
+  actorName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  characterName: {
+    fontSize: 12,
+    color: 'gray',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });
 
