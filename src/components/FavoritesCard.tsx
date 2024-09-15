@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { getImageUrl, getVoteAverageColor, formatDate } from '../utils';
 import { Movie } from '../@types';
 
-interface MovieCardProps {
+interface FavoritesCardProps {
   movie: Movie;
   onPress: (movieId: number) => void;
   onToggleFavorite: (movieId: number) => void;
@@ -14,7 +14,7 @@ interface MovieCardProps {
   showFavoriteIcon?: boolean;
 }
 
-const MovieCard: React.FC<MovieCardProps> = ({ 
+const FavoritesCard: React.FC<FavoritesCardProps> = ({ 
   movie, 
   onPress, 
   onToggleFavorite, 
@@ -77,4 +77,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MovieCard;
+export default FavoritesCard;

@@ -1,98 +1,72 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toggleFavoriteMovie, getFavoritesMovies } from '../services/Account';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getFavoritesMovies, toggleFavoriteMovie } from '../services/Account';
 import { Movie } from '../@types';
 
-const FAVORITES_LIMIT = 20;
 const ITEMS_PER_PAGE = 5;
 
 const useFavoriteMovies = () => {
-  const { accountId, sessionId } = useAuth();
+  const { user, accountId, sessionId } = useAuth();
   const [favorites, setFavorites] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
 
-  const fetchFavorites = useCallback(async (aid: string, sid: string) => {
-    setError(null);
+  const fetchFavorites = useCallback(async () => {
+    if (!accountId || !sessionId) return;
     setLoading(true);
-
     try {
-      const favoritesMovies = await getFavoritesMovies(aid, sid);
-      setFavorites(favoritesMovies.results.slice(0, FAVORITES_LIMIT));
-      setTotalPages(Math.ceil(Math.min(favoritesMovies.results.length, FAVORITES_LIMIT) / ITEMS_PER_PAGE));
+      const response = await getFavoritesMovies(accountId, sessionId);
+      setFavorites(response.results);
+      setTotalResults(response.total_results);
+      setTotalPages(Math.ceil(response.total_results / ITEMS_PER_PAGE));
     } catch (err) {
-      console.error('Failed to fetch favorites:', err);
-      setError('Failed to fetch favorites');
+      setError('Error fetching favorites');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [accountId, sessionId]);
 
   useEffect(() => {
-    if (accountId && sessionId) {
-      fetchFavorites(accountId, sessionId);
-    } else {
-      setLoading(false);
-    }
-  }, [accountId, sessionId, fetchFavorites]);
+    fetchFavorites();
+  }, [fetchFavorites]);
 
-  const toggleFavorite = async (movieId: number) => {
-    if (!accountId || !sessionId) {
-      setError('No active account or session');
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-
+  const toggleFavorite = useCallback(async (movieId: number) => {
+    if (!accountId || !sessionId) return;
     try {
       const isFavorite = favorites.some(movie => movie.id === movieId);
-      if (!isFavorite && favorites.length >= FAVORITES_LIMIT) {
-        setError('Favorite limit reached');
-        setLoading(false);
-        return;
-      }
-
       await toggleFavoriteMovie(movieId, !isFavorite, accountId, sessionId);
-      await fetchFavorites(accountId, sessionId);
+      await fetchFavorites();  // Refresh the list after toggling
     } catch (err) {
-      console.error('Failed to toggle favorite status:', err);
-      setError('Failed to update favorite status');
-    } finally {
-      setLoading(false);
+      setError('Error toggling favorite');
     }
-  };
+  }, [accountId, sessionId, favorites, fetchFavorites]);
 
-  const isFavorite = useCallback((movieId: number) => favorites.some(movie => movie.id === movieId), [favorites]);
+  const isFavorite = useCallback((movieId: number) => {
+    return favorites.some(movie => movie.id === movieId);
+  }, [favorites]);
 
-  const getCurrentPageFavorites = useCallback(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return favorites.slice(startIndex, endIndex);
-  }, [favorites, currentPage]);
-
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(prev => prev + 1);
     }
-  };
+  }, [currentPage, totalPages]);
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = useCallback(() => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      setCurrentPage(prev => prev - 1);
     }
-  };
+  }, [currentPage]);
 
-  const refetch = useCallback(() => {
-    if (accountId && sessionId) {
-      fetchFavorites(accountId, sessionId);
-    }
-  }, [accountId, sessionId, fetchFavorites]);
+  const paginatedFavorites = favorites.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return {
-    favorites: getCurrentPageFavorites(),
+    favorites: paginatedFavorites,
     loading,
     error,
     toggleFavorite,
@@ -101,8 +75,8 @@ const useFavoriteMovies = () => {
     totalPages,
     goToNextPage,
     goToPreviousPage,
-    favoritesCount: favorites.length,
-    refetch,
+    favoritesCount: totalResults,
+    refetch: fetchFavorites
   };
 };
 

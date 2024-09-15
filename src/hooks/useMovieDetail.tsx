@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getMovieDetails, rateMovie, getMovieRecommendations } from '../services/Movie';
-import { getRatedMovies } from '../services/Account';
+import { getMovieDetails, getMovieRecommendations } from '../services/Movie';
 import { useAuth } from '../context/AuthContext';
+import useRatedMovie from '../hooks/useRatedMovies';
 import { Movie } from '../@types';
 
 interface MovieWithCredits extends Movie {
@@ -21,26 +21,16 @@ const useMovieDetail = (movieId: number) => {
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [ratingLoading, setRatingLoading] = useState<boolean>(false);
-  const [ratingError, setRatingError] = useState<string | null>(null);
-  const [userRating, setUserRating] = useState<number | null>(null);
+  const { userRating, loading: ratingLoading, error: ratingError, submitRating } = useRatedMovie(movieId);
 
   const fetchMovieData = useCallback(async () => {
     if (!accountId || !sessionId) return;
 
     try {
-      const [detailsResult, recommendationsResult, ratedMoviesResult] = await Promise.all([
+      const [detailsResult, recommendationsResult] = await Promise.all([
         getMovieDetails(movieId),
         getMovieRecommendations(movieId),
-        getRatedMovies(accountId, sessionId)
       ]);
-
-      const ratedMovie = ratedMoviesResult.results.find((movie: { id: number; }) => movie.id === movieId);
-      if (ratedMovie) {
-        setUserRating(ratedMovie.rating / 2); // Convert to 5-star scale
-      } else {
-        setUserRating(null);
-      }
 
       setMovieDetail(detailsResult);
       setRecommendations(recommendationsResult.results);
@@ -54,28 +44,8 @@ const useMovieDetail = (movieId: number) => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    setUserRating(null);
     fetchMovieData();
   }, [movieId, fetchMovieData]);
-
-  const submitRating = async (rating: number) => {
-    if (!accountId || !sessionId) {
-      setRatingError('No account ID or session ID available');
-      return;
-    }
-
-    setRatingLoading(true);
-    setRatingError(null);
-    try {
-      const apiRating = rating * 2; // Convert to 10-star scale for API
-      await rateMovie(movieId, apiRating, sessionId);
-      setUserRating(rating);
-    } catch (err) {
-      setRatingError('Failed to submit rating');
-    } finally {
-      setRatingLoading(false);
-    }
-  };
 
   return { 
     movieDetail, 

@@ -3,13 +3,13 @@ import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 
 interface ErrorViewProps {
-  message: string;
+  message: string | null;
 }
 
 const ErrorView: React.FC<ErrorViewProps> = ({ message }) => {
   return (
     <View style={styles.centered}>
-      <Text>Oops, an unexpected error occurred</Text>
+      <Text>Oops, ha ocurrido un error inexperado.</Text>
       <Text>{message}</Text>
     </View>
   );

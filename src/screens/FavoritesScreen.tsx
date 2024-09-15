@@ -4,7 +4,7 @@ import { ActivityIndicator, Button, Dialog, Portal, Paragraph } from 'react-nati
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import useFavoriteMovies from '../hooks/useFavoriteMovies';
 import { StackNavigationProp } from '../@types';
-import MovieCard from '../components/MovieCard';
+import FavoritesCard from '../components/FavoritesCard';
 import Pagination from '../components/Pagination';
 import ErrorView from '../components/ErrorView';
 
@@ -54,7 +54,7 @@ const FavoritesScreen: React.FC = () => {
         <>
           <ScrollView>
             {favorites.map((movie) => (
-              <MovieCard
+              <FavoritesCard
                 key={movie.id}
                 movie={movie}
                 onPress={handleMoviePress}

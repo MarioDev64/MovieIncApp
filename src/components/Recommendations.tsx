@@ -2,10 +2,10 @@ import React from 'react';
 import { View, StyleSheet, Dimensions, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
 import { getImageUrl } from '../utils';
-import { Movies } from '../@types';
+import { Movie } from '../@types';
 
 interface RecommendationsCarouselProps {
-  recommendations: Movies[];
+  recommendations: Movie[];
   onMoviePress: (movieId: number) => void;
 }
 

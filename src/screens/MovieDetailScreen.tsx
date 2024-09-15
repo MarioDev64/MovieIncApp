@@ -1,12 +1,15 @@
 import React from 'react';
-import { View, StyleSheet, Image, ScrollView } from 'react-native';
-import { Text, ActivityIndicator, Chip, ToggleButton, Card, Avatar } from 'react-native-paper';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text, ActivityIndicator } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { Rating } from '@kolking/react-native-rating';
 import useMovieDetail from '../hooks/useMovieDetail';
 import useFavoriteMovie from '../hooks/useFavoriteMovie';
 import Recommendations from '../components/Recommendations';
-import { getImageUrl, getVoteAverageColor } from '../utils';
+import MoviePoster from '../components/Poster';
+import DetailedInfo from '../components/DetailedInfo';
+import Rating from '../components/Rating';
+import Casting from '../components/Casting';
+import ErrorView from '../components/ErrorView';
 import { StackNavigationProp } from '../@types';
 
 const MovieDetailScreen: React.FC = () => {
@@ -38,71 +41,32 @@ const MovieDetailScreen: React.FC = () => {
   }
 
   if (movieError || favoriteError) {
-    return (
-      <View style={styles.centered}>
-        <Text>{movieError || favoriteError}</Text>
-      </View>
-    );
+    return <ErrorView  message={movieError || favoriteError}/>
   }
 
-  const posterUrl = movieDetail?.poster_path ? getImageUrl(movieDetail.poster_path, "300") : '';
-  const releaseYear = movieDetail?.release_date?.split('-')[0] || '';
-  const displayRating = userRating !== null ? userRating * 2 : (movieDetail?.vote_average ?? 0);
-  const ratingForDisplay = userRating !== null ? userRating : (movieDetail?.vote_average ?? 0) / 2;
+  if (!movieDetail) {
+    return null;
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.posterContainer}>
-        <Image source={{ uri: posterUrl }} style={styles.poster} />
-        <View style={styles.favoriteButtonContainer}>
-          <ToggleButton
-            icon={isFavorite ? 'heart' : 'heart-outline'}
-            status={isFavorite ? 'checked' : 'unchecked'}
-            onPress={() => toggleFavorite()}
-            style={styles.favoriteButton}
-            disabled={favoriteLoading}
-          />
-          {favoriteError && <Text style={styles.errorText}>{favoriteError}</Text>}
-        </View>
-      </View>
-      <Text style={styles.title}>{movieDetail?.title}</Text>
-      <Text style={styles.releaseDate}>{releaseYear}</Text>
-      <Text style={styles.overview}>{movieDetail?.overview}</Text>
-      <View style={styles.genres}>
-        {movieDetail?.genres?.map((genre) => (
-          <Chip key={genre.id} style={styles.genreChip}>{genre.name}</Chip>
-        )) || <Text>No genres available</Text>}
-      </View>
-      <View style={styles.ratingContainer}>
-        <Rating
-          rating={ratingForDisplay}
-          maxRating={5}
-          size={28}
-          onChange={submitRating}
-        />
-        <Text style={[styles.average, { color: getVoteAverageColor(displayRating) }]}>
-          {displayRating.toFixed(2)}
-        </Text>
-        {ratingLoading && <ActivityIndicator size="small" style={styles.ratingIndicator} />}
-        {ratingError && <Text style={styles.errorText}>{ratingError}</Text>}
-      </View>
-      
-      <Text style={styles.sectionTitle}>Cast</Text>
-      <ScrollView horizontal style={styles.castContainer}>
-        {movieDetail?.credits?.cast.slice(0, 10).map((actor) => (
-          <Card key={actor.id} style={styles.castCard}>
-            <Card.Content>
-              <Avatar.Image 
-                size={80} 
-                source={{ uri: actor.profile_path ? getImageUrl(actor.profile_path, "200") : 'https://via.placeholder.com/200' }} 
-              />
-              <Text style={styles.actorName}>{actor.name}</Text>
-              <Text style={styles.characterName}>{actor.character}</Text>
-            </Card.Content>
-          </Card>
-        ))}
-      </ScrollView>
-
+    <ScrollView 
+      style={styles.container}
+      showsVerticalScrollIndicator={false}>
+      <MoviePoster 
+        posterPath={movieDetail.poster_path}
+        isFavorite={isFavorite}
+        onToggleFavorite={toggleFavorite}
+        favoriteLoading={favoriteLoading}
+      />
+      <DetailedInfo movie={movieDetail} />
+      <Rating 
+        userRating={userRating}
+        voteAverage={movieDetail.vote_average}
+        onRatingChange={submitRating}
+        ratingLoading={ratingLoading}
+        ratingError={ratingError}
+      />
+      {movieDetail.credits && <Casting cast={movieDetail.credits.cast} />}
       <Recommendations
         recommendations={recommendations}
         onMoviePress={handleMoviePress}
@@ -120,100 +84,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  posterContainer: {
-    position: 'relative',
-    width: '100%',
-    height: 500,
-  },
-  poster: {
-    width: '100%',
-    height: '100%',
-  },
-  favoriteButtonContainer: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  favoriteButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-  },
-  favoriteIndicator: {
-    marginLeft: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  releaseDate: {
-    fontSize: 16,
-    color: 'gray',
-    marginTop: 8,
-    marginHorizontal: 16,
-  },
-  overview: {
-    fontSize: 16,
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  genres: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  genreChip: {
-    margin: 4,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  average:{
-    fontSize: 26,
-    marginTop: 5,
-    marginLeft: 10,
-    fontWeight: "bold",
-  },
-  ratingIndicator: {
-    marginLeft: 8,
-  },
-  errorText: {
-    color: 'red',
-    marginLeft: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginHorizontal: 16,
-  },
-  castContainer: {
-    marginTop: 8,
-    marginHorizontal: 16,
-  },
-  castCard: {
-    width: 120,
-    marginRight: 8,
-  },
-  actorName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  characterName: {
-    fontSize: 12,
-    color: 'gray',
-    marginTop: 4,
-    textAlign: 'center',
   },
 });
 
