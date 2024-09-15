@@ -7,19 +7,19 @@ const FAVORITES_LIMIT = 20;
 const ITEMS_PER_PAGE = 5;
 
 const useFavoriteMovies = () => {
-  const { accountId } = useAuth();
+  const { accountId, sessionId } = useAuth();
   const [favorites, setFavorites] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  const fetchFavorites = useCallback(async (aid: string) => {
+  const fetchFavorites = useCallback(async (aid: string, sid: string) => {
     setError(null);
     setLoading(true);
 
     try {
-      const favoritesMovies = await getFavoritesMovies(aid);
+      const favoritesMovies = await getFavoritesMovies(aid, sid);
       setFavorites(favoritesMovies.results.slice(0, FAVORITES_LIMIT));
       setTotalPages(Math.ceil(Math.min(favoritesMovies.results.length, FAVORITES_LIMIT) / ITEMS_PER_PAGE));
     } catch (err) {
@@ -31,16 +31,16 @@ const useFavoriteMovies = () => {
   }, []);
 
   useEffect(() => {
-    if (accountId) {
-      fetchFavorites(accountId);
+    if (accountId && sessionId) {
+      fetchFavorites(accountId, sessionId);
     } else {
       setLoading(false);
     }
-  }, [accountId, fetchFavorites]);
+  }, [accountId, sessionId, fetchFavorites]);
 
   const toggleFavorite = async (movieId: number) => {
-    if (!accountId) {
-      setError('No active account');
+    if (!accountId || !sessionId) {
+      setError('No active account or session');
       return;
     }
 
@@ -55,8 +55,8 @@ const useFavoriteMovies = () => {
         return;
       }
 
-      await toggleFavoriteMovie(movieId, !isFavorite, accountId);
-      await fetchFavorites(accountId);
+      await toggleFavoriteMovie(movieId, !isFavorite, accountId, sessionId);
+      await fetchFavorites(accountId, sessionId);
     } catch (err) {
       console.error('Failed to toggle favorite status:', err);
       setError('Failed to update favorite status');
@@ -86,10 +86,10 @@ const useFavoriteMovies = () => {
   };
 
   const refetch = useCallback(() => {
-    if (accountId) {
-      fetchFavorites(accountId);
+    if (accountId && sessionId) {
+      fetchFavorites(accountId, sessionId);
     }
-  }, [accountId, fetchFavorites]);
+  }, [accountId, sessionId, fetchFavorites]);
 
   return {
     favorites: getCurrentPageFavorites(),

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Movie } from '../@types';
 
 const useMovieDetail = (movieId: number) => {
-  const { accountId } = useAuth();
+  const { accountId, sessionId } = useAuth();
   const [movieDetail, setMovieDetail] = useState<Movie | null>(null);
   const [recommendations, setRecommendations] = useState<Movie[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -15,13 +15,13 @@ const useMovieDetail = (movieId: number) => {
   const [userRating, setUserRating] = useState<number | null>(null);
 
   const fetchMovieData = useCallback(async () => {
-    if (!accountId) return;
+    if (!accountId || !sessionId) return;
 
     try {
       const [detailsResult, recommendationsResult, ratedMoviesResult] = await Promise.all([
         getMovieDetails(movieId),
         getMovieRecommendations(movieId),
-        getRatedMovies(accountId)
+        getRatedMovies(accountId, sessionId)
       ]);
 
       const ratedMovie = ratedMoviesResult.results.find((movie: { id: number; }) => movie.id === movieId);
@@ -38,7 +38,7 @@ const useMovieDetail = (movieId: number) => {
       setError('Failed to fetch movie data');
       setLoading(false);
     }
-  }, [movieId, accountId]);
+  }, [movieId, accountId, sessionId]);
 
   useEffect(() => {
     setLoading(true);
@@ -48,8 +48,8 @@ const useMovieDetail = (movieId: number) => {
   }, [movieId, fetchMovieData]);
 
   const submitRating = async (rating: number) => {
-    if (!accountId) {
-      setRatingError('No account ID available');
+    if (!accountId || !sessionId) {
+      setRatingError('No account ID or session ID available');
       return;
     }
 
@@ -57,7 +57,7 @@ const useMovieDetail = (movieId: number) => {
     setRatingError(null);
     try {
       const apiRating = rating * 2; // Convert to 10-star scale for API
-      await rateMovie(movieId, apiRating);
+      await rateMovie(movieId, apiRating, sessionId);
       setUserRating(rating);
     } catch (err) {
       setRatingError('Failed to submit rating');

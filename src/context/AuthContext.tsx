@@ -10,6 +10,7 @@ interface AuthContextData {
   isLoggedIn: boolean;
   user: UserProfile | null;
   accountId: string | null;
+  sessionId: string | null;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
@@ -22,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSessionExpiredDialog, setShowSessionExpiredDialog] = useState(false);
   const navigation = useNavigation();
@@ -40,25 +42,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const token = await getKey('userToken');
-      const sessionId = await getKey('userSessionId');
-      if (token && sessionId) {
-        const userProfile = await getUserProfile(sessionId);
+      const storedSessionId = await getKey('userSessionId');
+      if (token && storedSessionId) {
+        const userProfile = await getUserProfile(storedSessionId);
         setUser(userProfile);
         setAccountId(userProfile.id.toString());
+        setSessionId(storedSessionId);
         setIsLoggedIn(true);
       } else {
-        setUser(null);
-        setAccountId(null);
-        setIsLoggedIn(false);
+        clearStorage();
       }
     } catch (error: any) {
       if (error.isSessionExpired) {
         await handleSessionExpiration();
       } else {
         console.error('Error checking login status:', error);
-        setUser(null);
-        setAccountId(null);
-        setIsLoggedIn(false);
+        clearStorage();
       }
     } finally {
       setLoading(false);
@@ -76,12 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await loginAPI(username, password);
       if(response.success){
         const token = response.request_token;
-        const sessionId = await getSesionId(token);
+        const newSessionId = await getSesionId(token);
         await saveKey('userToken', token);
-        await saveKey('userSessionId', sessionId);
-        const userProfile = await getUserProfile(sessionId);
+        await saveKey('userSessionId', newSessionId);
+        const userProfile = await getUserProfile(newSessionId);
         setUser(userProfile);
         setAccountId(userProfile.id.toString());
+        setSessionId(newSessionId);
         setIsLoggedIn(true);
       }
       return response;
@@ -95,7 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setLoading(true);
     try {
-      const sessionId = await getKey('userSessionId');
       if (sessionId) {
         await logoutAPI(sessionId);
       }
@@ -103,10 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Logout failed:', error);
     } finally {
       clearStorage();
-      setUser(null);
-      setAccountId(null);
-      setIsLoggedIn(false);
-      setLoading(false);
     }
   };
 
@@ -116,11 +111,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     removeKey('userSessionId');
     setUser(null);
     setAccountId(null);
+    setSessionId(null);
     setIsLoggedIn(false);
+    setLoading(false);
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, accountId, login, logout, loading, handleSessionExpiration }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, accountId, sessionId, login, logout, loading, handleSessionExpiration }}>
       {children}
       <SessionExpiredDialog 
         visible={showSessionExpiredDialog} 

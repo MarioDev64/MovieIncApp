@@ -13,9 +13,10 @@ export const getMovieDetails = async (movieId: number) => {
     return response.data;
 };
   
-export const rateMovie = async (movieId: number, rating: number) => {
+export const rateMovie = async (movieId: number, rating: number, sessionId:string) => {
     const response = await axiosInstance.post(`/movie/${movieId}/rating`, {
       value: rating,
+      session_id: sessionId
     });
     return response.data;
 };

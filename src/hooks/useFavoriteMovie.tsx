@@ -3,17 +3,17 @@ import { toggleFavoriteMovie, getFavoritesMovies } from '../services/Account';
 import { useAuth } from '../context/AuthContext';
 
 const useFavoriteMovie = (movieId: number) => {
-  const { accountId } = useAuth();
+  const { accountId, sessionId } = useAuth();
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const checkFavoriteStatus = useCallback(async (aid: string, id: number) => {
+  const checkFavoriteStatus = useCallback(async (aid: string, sid: string, id: number) => {
     setError(null);
     setLoading(true);
 
     try {
-      const favoritesMovies = await getFavoritesMovies(aid);
+      const favoritesMovies = await getFavoritesMovies(aid, sid);
       const isFav = favoritesMovies.results.some((movie: any) => movie.id === id);
       setIsFavorite(isFav);
     } catch (err) {
@@ -25,16 +25,16 @@ const useFavoriteMovie = (movieId: number) => {
   }, []);
 
   useEffect(() => {
-    if (accountId) {
-      checkFavoriteStatus(accountId, movieId);
+    if (accountId && sessionId) {
+      checkFavoriteStatus(accountId, sessionId, movieId);
     } else {
       setLoading(false);
     }
-  }, [movieId, accountId, checkFavoriteStatus]);
+  }, [movieId, accountId, sessionId, checkFavoriteStatus]);
 
   const toggleFavorite = async () => {
-    if (!accountId) {
-      setError('No active account');
+    if (!accountId || !sessionId) {
+      setError('No active account or session');
       return;
     }
 
@@ -43,7 +43,7 @@ const useFavoriteMovie = (movieId: number) => {
 
     try {
       const newFavoriteStatus = !isFavorite;
-      await toggleFavoriteMovie(movieId, newFavoriteStatus, accountId);
+      await toggleFavoriteMovie(movieId, newFavoriteStatus, accountId, sessionId);
       setIsFavorite(newFavoriteStatus);
     } catch (err) {
       console.error('Failed to toggle favorite status:', err);
