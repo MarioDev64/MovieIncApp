@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getMovieDetails, getMovieRecommendations } from '../services/Movie';
 import { useAuth } from '../context/AuthContext';
-import useRatedMovie from '../hooks/useRatedMovies';
+import useRatedMovie from '../hooks/useRatedMovie';
 import { Movie } from '../@types';
 
 interface MovieWithCredits extends Movie {

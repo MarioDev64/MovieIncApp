@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { IconButton } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext'; 
-import { RootStackParamList, RootTabParamList } from '../@types';
+import { RootStackParamList, RootTabParamList, AuthStackParamList } from '../@types';
 
 import LoginScreen from '../screens/LoginScreen';
+import ApprovalScreen from '../screens/ApprovalScreen';
 import PlayingNowScreen from '../screens/PlayingNowScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -14,6 +14,7 @@ import MovieDetailScreen from '../screens/MovieDetailScreen';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
+const AuthStack = createStackNavigator<AuthStackParamList>();
 
 const MainNavigator = () => {
   return (
@@ -53,6 +54,13 @@ const MainNavigator = () => {
   );
 };
 
+const AuthNavigator = () => (
+  <AuthStack.Navigator>
+    <AuthStack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+    <AuthStack.Screen name="Approval" component={ApprovalScreen} options={{ title: 'Autorizar' }} />
+  </AuthStack.Navigator>
+);
+
 const AppNavigator = () => {
   const { isLoggedIn } = useAuth();
 
@@ -64,19 +72,14 @@ const AppNavigator = () => {
           <Stack.Screen name="MovieDetail" component={MovieDetailScreen} options={{ title: 'Detalle de película' }} />
         </>
       ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen 
+          name="Auth" 
+          component={AuthNavigator} 
+          options={{ headerShown: false }}
+        />
       )}
     </Stack.Navigator>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f0f0f0',
-  }
-});
 
 export default AppNavigator;

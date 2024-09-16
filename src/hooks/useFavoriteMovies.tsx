@@ -1,33 +1,30 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getFavoritesMovies, toggleFavoriteMovie } from '../services/Account';
-import { Movie } from '../@types';
+import { toggleFavoriteMovie } from '../services/Account';
+import { useMovieStore } from '../store/MovieStore';
 
 const ITEMS_PER_PAGE = 5;
 
 const useFavoriteMovies = () => {
-  const { user, accountId, sessionId } = useAuth();
-  const [favorites, setFavorites] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { accountId, sessionId } = useAuth();
+  const { favoriteMovies, playingNowMovies, loadFavorites, addFavorite, removeFavorite } = useMovieStore();
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
   const fetchFavorites = useCallback(async () => {
     if (!accountId || !sessionId) return;
     setLoading(true);
     try {
-      const response = await getFavoritesMovies(accountId, sessionId);
-      setFavorites(response.results);
-      setTotalResults(response.total_results);
-      setTotalPages(Math.ceil(response.total_results / ITEMS_PER_PAGE));
+      await loadFavorites(accountId, sessionId);
+      setTotalPages(Math.ceil(favoriteMovies.length / ITEMS_PER_PAGE));
     } catch (err) {
       setError('Error fetching favorites');
     } finally {
       setLoading(false);
     }
-  }, [accountId, sessionId]);
+  }, [accountId, sessionId, loadFavorites, favoriteMovies.length]);
 
   useEffect(() => {
     fetchFavorites();
@@ -36,17 +33,22 @@ const useFavoriteMovies = () => {
   const toggleFavorite = useCallback(async (movieId: number) => {
     if (!accountId || !sessionId) return;
     try {
-      const isFavorite = favorites.some(movie => movie.id === movieId);
+      const isFavorite = favoriteMovies.some(movie => movie.id === movieId);
       await toggleFavoriteMovie(movieId, !isFavorite, accountId, sessionId);
-      await fetchFavorites();  // Refresh the list after toggling
+      if (isFavorite) {
+        removeFavorite(movieId);
+      } else {
+        const movieToAdd = playingNowMovies.find(movie => movie.id === movieId);
+        if (movieToAdd) addFavorite(movieToAdd);
+      }
     } catch (err) {
       setError('Error toggling favorite');
     }
-  }, [accountId, sessionId, favorites, fetchFavorites]);
+  }, [accountId, sessionId, favoriteMovies, addFavorite, removeFavorite]);
 
   const isFavorite = useCallback((movieId: number) => {
-    return favorites.some(movie => movie.id === movieId);
-  }, [favorites]);
+    return favoriteMovies.some(movie => movie.id === movieId);
+  }, [favoriteMovies]);
 
   const goToNextPage = useCallback(() => {
     if (currentPage < totalPages) {
@@ -60,7 +62,7 @@ const useFavoriteMovies = () => {
     }
   }, [currentPage]);
 
-  const paginatedFavorites = favorites.slice(
+  const paginatedFavorites = favoriteMovies.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -75,10 +77,9 @@ const useFavoriteMovies = () => {
     totalPages,
     goToNextPage,
     goToPreviousPage,
-    favoritesCount: totalResults,
+    favoritesCount: favoriteMovies.length,
     refetch: fetchFavorites
   };
 };
 
 export default useFavoriteMovies;
-

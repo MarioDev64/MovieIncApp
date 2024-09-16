@@ -44,9 +44,13 @@ export const getFavoritesMovies = async (accountId: string, sessionId: string, p
   }
 };
 
-export const getRatedMovies = async (accountId: string) => {
+export const getRatedMovies = async (accountId: string, sessionId: string) => {
   try {
-    const response = await axiosInstance.get(`/account/${accountId}/rated/movies`);
+    const response = await axiosInstance.get(`/account/${accountId}/rated/movies`, {
+      params: {
+        session_id: sessionId
+      }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching rated movies:', error);

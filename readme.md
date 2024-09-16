@@ -7,7 +7,7 @@
 - **Favorites**: Users can add or remove movies from their favorites list. This feature is handled through the `/account/{account_id}/favorite` endpoint.
 - **Movie Rating**: Users can rate movies using TMDB's API with a scoring system.
 - **Profile Screen**: Shows the user’s profile information and allows account management.
-- **Movie Detail Screen**: Includes complete movie details such as title, genres, average vote, release date, and a list of recommendations.
+- **Movie Detail Screen**: Includes complete movie details such as title, genres, average vote, release date, casting and a list of recommendations.
 - **Authentication**: Implements TMDB's authentication system with login, logout, and token management.
 
 ## 📱 Navigation:
@@ -25,6 +25,7 @@
 - **React Native Paper** for UI components like buttons and icons.
 - **Moment.js** for formatting dates.
 - **@kolking/react-native-rating** for managing the movie rating system.
+- **Zustand** for state managing and caching the movies.
 
 ## 📡 Integrated API:
 The application communicates with the **TMDB API** to retrieve movie data, manage favorites, and handle authentication. The main functionalities handled by the API include:
@@ -35,10 +36,13 @@ The application communicates with the **TMDB API** to retrieve movie data, manag
 - Managing user profiles.
 
 ## 📂 Folder Structure:
+- **src/@types**: Here are the interfaces and types.
 - **src/navigation**: Configuration for screen navigation.
 - **src/services**: Logic for communication with the TMDB API to retrieve data, handle authentication, and manage favorites.
 - **src/context**: React contexts for managing user authentication and other global states.
 - **src/screens**: Main screen components of the application.
+- **src/hooks**: Custom hooks that contain the logic separated from the UI.
+- **src/store**: It contains the stores to manage states and cache.
 - **src/utils**: Helper functions such as formatting dates, getting colors based on ratings, and managing images.
 
 ## ⚙️ Setup and Installation:

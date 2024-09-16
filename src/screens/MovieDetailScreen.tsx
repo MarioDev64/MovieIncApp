@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Text, ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import useMovieDetail from '../hooks/useMovieDetail';
 import useFavoriteMovie from '../hooks/useFavoriteMovie';
@@ -10,11 +10,11 @@ import DetailedInfo from '../components/DetailedInfo';
 import Rating from '../components/Rating';
 import Casting from '../components/Casting';
 import ErrorView from '../components/ErrorView';
-import { StackNavigationProp } from '../@types';
+import { RootStackNavigationProp } from '../@types';
 
 const MovieDetailScreen: React.FC = () => {
   const route = useRoute();
-  const navigation = useNavigation<StackNavigationProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { movieId } = route.params as { movieId: number };
   const { 
     movieDetail, 

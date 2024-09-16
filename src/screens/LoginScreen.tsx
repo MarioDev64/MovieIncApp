@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Linking, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { TextInput, Button, Text, HelperText } from 'react-native-paper';
 import { Formik, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useAuth } from '../context/AuthContext';
+import { useNavigation, useIsFocused, useRoute, RouteProp } from '@react-navigation/native';
+import { AuthStackNavigationProp, AuthStackParamList } from '../@types';
+import { AxiosError } from 'axios';
+import { approveRequestToken } from '../services/Authentication';
 
 const LoginSchema = Yup.object().shape({
   username: Yup.string().required('El nombre de usuario es requerido'),
@@ -16,31 +20,60 @@ interface FormValues {
 }
 
 const LoginScreen: React.FC = () => {
-  const { login, loading } = useAuth();
-  const [error, setError] = useState('');
+  const { login, completeLogin, loading } = useAuth();
+  const [error, setError] = useState<string>('');
+  const navigation = useNavigation<AuthStackNavigationProp>();
+  const route = useRoute<RouteProp<AuthStackParamList, 'Login'>>();
+  const [lastRequestToken, setLastRequestToken] = useState<string | null>(null);
+  const isFocused = useIsFocused();
+
+  useEffect(() => {
+    if (isFocused && route.params?.isReturningFromApproval && lastRequestToken) {
+      handleCompleteLogin(lastRequestToken);
+    }
+  }, [isFocused, route.params?.isReturningFromApproval]);
 
   const handleLogin = async (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
     setError('');
-    await login(values.username, values.password)
-    .catch(err => {
-      if(err.response.data.status_code === 30){
-        setError('Credenciales inválidas. Correo Electrónico o Contraseña incorrectos.');
-      }else{
+    try {
+      const requestToken = await login(values.username, values.password);
+      setLastRequestToken(requestToken);
+      await approveRequestToken(requestToken);
+      navigation.navigate('Approval', { requestToken });
+    } catch (err) {
+      if (err instanceof AxiosError && err.response) {
+        if (err.response.data.status_code === 30) {
+          setError('Credenciales inválidas. Correo Electrónico o Contraseña incorrectos.');
+        } else {
+          setError(err.response.data.message);
+        }
+      } else {
+        console.error(err);
         setError('Ha ocurrido un error inesperado.');
       }
-    });
-    setSubmitting(false);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCompleteLogin = async (requestToken: string) => {
+    try {
+      await completeLogin(requestToken);
+    } catch (err) {
+      setError('Error al completar el inicio de sesión. Por favor, intente nuevamente.');
+    }
   };
 
   return (
     <KeyboardAvoidingView 
       style={styles.keyboard} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.container}>
           <Image
-            source={require('../assets/logo.jpeg')}
+            source={require('../../assets/logo.jpeg')}
             style={styles.logo}
             resizeMode="contain"
           />

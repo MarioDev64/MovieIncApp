@@ -23,7 +23,7 @@ const PlayingNowCard: React.FC<PlayingNowCardProps> = ({
   return (
     <Card style={styles.card}>
       <TouchableOpacity onPress={() => onPress(movie.id)}>
-        <Card.Cover source={{ uri: getImageUrl(movie.poster_path) }} />
+        <Card.Cover style={styles.poster}source={{ uri: getImageUrl(movie.poster_path) }} />
       </TouchableOpacity>
       <Card.Content>
         <View style={styles.titleContainer}>
@@ -54,6 +54,10 @@ const PlayingNowCard: React.FC<PlayingNowCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
+  },
+  poster:{
+    borderBottomStartRadius: 0,
+    borderBottomEndRadius: 0,
   },
   titleContainer: {
     flexDirection: 'row',

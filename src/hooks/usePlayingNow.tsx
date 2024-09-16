@@ -1,28 +1,20 @@
-import { useEffect, useState } from 'react';
-import { getPlayingNowMovies } from '../services/Movie';
-import { Movie } from '../@types';
+import { useEffect } from 'react';
+import { useMovieStore } from '../store/MovieStore';
 
 const usePlayingNowMovies = () => {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { playingNowMovies, loadPlayingNow } = useMovieStore();
 
   useEffect(() => {
-    const getMovies = async () => {
-      try {
-        const results = await getPlayingNowMovies();
-        setMovies(results);
-        setLoading(false);
-      } catch (error) {
-        setError('Failed to fetch movies');
-        setLoading(false);
-      }
-    };
+    if (playingNowMovies.length === 0) {
+      loadPlayingNow();
+    }
+  }, [loadPlayingNow, playingNowMovies.length]);
 
-    getMovies();
-  }, []);
-
-  return { movies, loading, error };
+  return { 
+    movies: playingNowMovies, 
+    loading: playingNowMovies.length === 0, 
+    error: null 
+  };
 };
 
 export default usePlayingNowMovies;

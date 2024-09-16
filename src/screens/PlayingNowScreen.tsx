@@ -4,14 +4,14 @@ import { ActivityIndicator } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import usePlayingNow from '../hooks/usePlayingNow';
 import useFavoriteMovies from '../hooks/useFavoriteMovies';
-import { StackNavigationProp } from '../@types';
+import { RootStackNavigationProp } from '../@types';
 import ErrorView from '../components/ErrorView';
 import PlayingNowCard from '../components/PlayingNowCard';
 
 const PlayingNowScreen: React.FC = () => {
   const { movies, loading: moviesLoading, error: moviesError } = usePlayingNow();
   const { isFavorite, loading: favoritesLoading, error: favoritesError, toggleFavorite, refetch: refetchFavorites } = useFavoriteMovies();
-  const navigation = useNavigation<StackNavigationProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
 
   useFocusEffect(
     React.useCallback(() => {

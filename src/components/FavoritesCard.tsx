@@ -1,4 +1,3 @@
-// MovieCard.tsx
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Card, Title, Paragraph, IconButton } from 'react-native-paper';
@@ -24,7 +23,7 @@ const FavoritesCard: React.FC<FavoritesCardProps> = ({
   return (
     <Card style={styles.card}>
       <TouchableOpacity onPress={() => onPress(movie.id)}>
-        <Card.Cover source={{ uri: getImageUrl(movie.poster_path) }} />
+        <Card.Cover style={styles.poster} source={{ uri: getImageUrl(movie.poster_path) }} />
       </TouchableOpacity>
       <Card.Content>
         <View style={styles.titleContainer}>
@@ -56,6 +55,10 @@ const FavoritesCard: React.FC<FavoritesCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
+  },
+  poster:{
+    borderBottomStartRadius: 0,
+    borderBottomEndRadius: 0,
   },
   titleContainer: {
     flexDirection: 'row',

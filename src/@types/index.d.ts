@@ -1,5 +1,6 @@
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { CompositeNavigationProp } from '@react-navigation/native';
 
 export type RootTabParamList = {
   PlayingNow: undefined;
@@ -7,18 +8,30 @@ export type RootTabParamList = {
   Profile: undefined;
 };
 
+export type AuthStackParamList = {
+  Login: { isReturningFromApproval?: boolean; requestToken?: string };
+  Approval: { requestToken: string };
+};
+
 export type RootStackParamList = {
-  Login: undefined;
+  Auth: undefined;
   Main: undefined;
-  MovieDetail: undefined; 
+  MovieDetail: { movieId: number };
 };
 
 export type BottomTabNavigationProp = BottomTabNavigationProp<RootTabParamList>;
-export type StackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+export type AuthStackNavigationProp = NativeStackNavigationProp<AuthStackParamList>;
+export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export interface ScreenProps {
-  navigation: BottomTabNavigationProp | StackNavigationProp;
-}
+export type ScreenProps = {
+  navigation: CompositeNavigationProp<
+    BottomTabNavigationProp,
+    CompositeNavigationProp<
+      AuthStackNavigationProp,
+      RootStackNavigationProp
+    >
+  >;
+};
 
 export interface UserProfile {
   avatar: {
@@ -37,7 +50,7 @@ export interface UserProfile {
   username: string;
 }
 
-interface genres{
+interface genres {
   id: number;
   name: string;
 }
@@ -49,5 +62,19 @@ export interface Movie {
   poster_path: string;
   release_date: string;
   overview: string;
+  rating: number;
   genres: genres[];
+}
+
+interface MovieStore {
+  favoriteMovies: Movie[];
+  ratedMovies: Movie[];
+  playingNowMovies: Movie[];
+  loadFavorites: (accountId: string, sessionId: string) => Promise<void>;
+  loadRated: (accountId: string, sessionId: string) => Promise<void>;
+  loadPlayingNow: () => Promise<void>;
+  addFavorite: (movie: Movie) => void;
+  removeFavorite: (movieId: number) => void;
+  setRating: (movieId: number, rating: number) => void;
+  clearStore: () => void;
 }

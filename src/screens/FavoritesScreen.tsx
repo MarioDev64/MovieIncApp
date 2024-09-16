@@ -3,10 +3,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Dialog, Portal, Paragraph } from 'react-native-paper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import useFavoriteMovies from '../hooks/useFavoriteMovies';
-import { StackNavigationProp } from '../@types';
+import { RootStackNavigationProp } from '../@types';
 import FavoritesCard from '../components/FavoritesCard';
 import Pagination from '../components/Pagination';
 import ErrorView from '../components/ErrorView';
+import NoData from '../components/NoData';
 
 const FavoritesScreen: React.FC = () => {
   const {
@@ -21,7 +22,7 @@ const FavoritesScreen: React.FC = () => {
     favoritesCount,
     refetch
   } = useFavoriteMovies();
-  const navigation = useNavigation<StackNavigationProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const [dialogVisible, setDialogVisible] = React.useState(false);
 
   useFocusEffect(
@@ -44,6 +45,10 @@ const FavoritesScreen: React.FC = () => {
 
   if (error) {
     return <ErrorView message={error} />;
+  }
+
+  if(!favorites || favorites.length === 0) {
+    return <NoData message={'Por favor, intenta agregar alguna Película a favoritos'} />;
   }
 
   return (
